@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}告警规则{% endblock %}
+{% block header %}告警规则引擎{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+{% if current_user.is_admin %}
+<div class="filter-section">
+    <form method="post" action="{{ url_for('admin.create_alert_rule') }}" class="filter-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="filter-group">
+            <label>规则名称:</label>
+            <input type="text" name="name" placeholder="如:高危攻击告警" required maxlength="128">
+        </div>
+        <div class="filter-group">
+            <label>类型:</label>
+            <select name="rule_type" id="rule_type">
+                {% for key, label in rule_types.items() %}
+                <option value="{{ key }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group" id="severity_group">
+            <label>严重级别:</label>
+            <select name="severity">
+                <option value="">不限</option>
+                <option value="medium">medium 及以上</option>
+                <option value="high">high 及以上</option>
+                <option value="critical">critical</option>
+            </select>
+        </div>
+        <div class="filter-group" id="freq_group" style="display:none;">
+            <label>阈值:</label>
+            <input type="number" name="threshold" value="10" min="1" style="width:80px;">
+            <label style="margin-left:8px;">窗口(分):</label>
+            <input type="number" name="window_minutes" value="5" min="1" style="width:70px;">
+        </div>
+        <div class="filter-group">
+            <label>冷却(分):</label>
+            <input type="number" name="cooldown_minutes" value="60" min="0" style="width:70px;">
+        </div>
+        <label class="checkbox-label">
+            <input type="checkbox" name="enabled" checked> 启用
+        </label>
+        <button type="submit" class="btn btn-primary">创建规则</button>
+        <div class="btn-group-right">
+            <a href="{{ url_for('admin.alert_history') }}" class="btn btn-secondary">告警历史</a>
+        </div>
+    </form>
+</div>
+{% else %}
+<div class="filter-section">
+    <div class="readonly-hint">只读观察员仅可查看规则,不能创建或修改。</div>
+    <a href="{{ url_for('admin.alert_history') }}" class="btn btn-secondary">告警历史</a>
+</div>
+{% endif %}
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>ID</th><th>名称</th><th>类型</th><th>条件</th>
+            <th>冷却</th><th>状态</th><th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for rule in rules %}
+        <tr>
+            <td>{{ rule.id }}</td>
+            <td><strong>{{ rule.name }}</strong></td>
+            <td>{{ rule_types.get(rule.rule_type, rule.rule_type) }}</td>
+            <td class="text-muted">
+                {% if rule.rule_type == 'high_severity' %}
+                    级别 ≥ {{ rule.severity or '不限' }}
+                    {% if rule.signature %} · 签名={{ rule.signature }}{% endif %}
+                {% elif rule.rule_type == 'ip_frequency' %}
+                    {{ rule.window_minutes }} 分钟内 ≥ {{ rule.threshold }} 次
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+            <td>{{ rule.cooldown_minutes }} 分</td>
+            <td>
+                {% if rule.enabled %}
+                    <span class="badge badge-success">启用</span>
+                {% else %}
+                    <span class="badge badge-muted">禁用</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if current_user.is_admin %}
+                <form method="post" action="{{ url_for('admin.toggle_alert_rule', rule_id=rule.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-secondary">
+                        {{ '禁用' if rule.enabled else '启用' }}
+                    </button>
+                </form>
+                <form method="post" action="{{ url_for('admin.delete_alert_rule', rule_id=rule.id) }}"
+                      onsubmit="return confirm('确定删除规则 {{ rule.name }} 吗？');"
+                      style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                </form>
+                {% else %}
+                <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;padding:30px;">暂无告警规则</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<h3 style="margin-top:32px;">最近告警 ({{ recent|length }})</h3>
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+        <tr><th>时间</th><th>规则</th><th>IP</th><th>详情</th></tr>
+        </thead>
+        <tbody>
+        {% for h in recent %}
+        <tr>
+            <td>{{ h.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>{{ h.rule.name if h.rule else '(已删除)' }}</td>
+            <td><code>{{ h.ip_address }}</code></td>
+            <td class="text-muted">{{ h.detail }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align:center;padding:24px;">暂无告警记录</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+// 按规则类型显示/隐藏对应的条件输入
+(function () {
+    var sel = document.getElementById('rule_type');
+    if (!sel) return;  // 只读页面无创建表单
+    var sev = document.getElementById('severity_group');
+    var freq = document.getElementById('freq_group');
+    function sync() {
+        var t = sel.value;
+        sev.style.display = (t === 'high_severity') ? '' : 'none';
+        freq.style.display = (t === 'ip_frequency') ? '' : 'none';
+    }
+    sel.addEventListener('change', sync);
+    sync();
+})();
+</script>
+
+{% endblock %}

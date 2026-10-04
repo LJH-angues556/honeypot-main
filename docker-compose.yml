@@ -1,0 +1,208 @@
+# 蜜罐系统一键部署栈:MySQL + Redis + Flask 应用 + Nginx
+# 用法:在项目根目录执行  docker compose up -d
+# 首次启动会自动:建表(flask db upgrade)→ 建管理员(manage.py all)→ 起 gunicorn
+# 所有外部流量经 Nginx(80 端口)反向代理到 app:5000
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: honeypot-mysql
+    restart: unless-stopped
+    environment:
+      # 密码从 .env 的 MYSQL_PASSWORD 取,缺省 example
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-example}
+      MYSQL_DATABASE: ${MYSQL_DB:-honeypot}
+    healthcheck:
+      # mysqladmin ping 返回 0 表示存活;$$ 转义避免 compose 插值
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - honeypot-net
+
+  redis:
+    image: redis:7.2
+    container_name: honeypot-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - redis_data:/data
+    networks:
+      - honeypot-net
+
+  app:
+    build: .
+    container_name: honeypot-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # 容器间通信用服务名覆盖 .env 的 127.0.0.1
+      MYSQL_HOST: mysql
+      REDIS_HOST: redis
+      FLASK_APP: app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # 仅容器网络内暴露,外部统一走 Nginx 80 端口
+    expose:
+      - "5000"
+    # entrypoint 负责等待 MySQL/迁移/建管理员,随后 exec 该命令
+    # gthread 线程 worker:SSE 长连接由线程承载,主线程持续上报心跳,
+    # 不会被 worker timeout 杀死(sync worker 30s 超时会掐断 SSE)
+    command: ["gunicorn", "-w", "4", "-k", "gthread", "--threads", "8",
+              "-b", "0.0.0.0:5000", "--timeout", "120",
+              "--access-logfile", "-", "--error-logfile", "-", "app:create_app()"]
+    networks:
+      - honeypot-net
+
+  # RQ 异步任务 worker:消费 honeypot 队列(GeoIP 补全、告警/日报邮件)
+  rq-worker:
+    build: .
+    container_name: honeypot-rq-worker
+    restart: unless-stopped
+    # 绕过 app 的 entrypoint(等待 MySQL/迁移/gunicorn),depends_on 已保证依赖就绪
+    entrypoint: [""]
+    env_file: .env
+    environment:
+      MYSQL_HOST: mysql
+      REDIS_HOST: redis
+    # 队列名需与 config.RQ_QUEUE_NAME 一致(默认 honeypot)
+    command: ["rq", "worker", "honeypot", "--url", "redis://redis:6379/0"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - honeypot-net
+
+  # 轻量定时调度器(单实例):到点把每日报告/数据清理任务入队
+  scheduler:
+    build: .
+    container_name: honeypot-scheduler
+    restart: unless-stopped
+    entrypoint: [""]
+    env_file: .env
+    environment:
+      MYSQL_HOST: mysql
+      REDIS_HOST: redis
+    command: ["python", "-m", "app.jobs", "scheduler"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - honeypot-net
+
+  # HTTP 蜜罐诱饵:对攻击者暴露 8080(phpMyAdmin)/8081(WordPress),
+  # 捕获凭据与攻击特征后经 app:5000/api/capture 上报,启动自动注册节点+心跳
+  http-honeypot:
+    build: .
+    container_name: honeypot-http
+    restart: unless-stopped
+    # 蜜罐只通过 HTTP 连 app,不需要 MySQL 迁移等 entrypoint 逻辑
+    entrypoint: [""]
+    env_file: .env
+    environment:
+      HONEYPOT_API_URL: http://app:5000
+      HONEYPOT_NODE_NAME: ${HONEYPOT_NODE_NAME:-http-honeypot-1}
+      HONEYPOT_PORTS: ${HONEYPOT_PORTS:-8080:phpmyadmin,8081:wordpress}
+    command: ["python", "-m", "honeypots.http_honeypot"]
+    depends_on:
+      - app
+    ports:
+      - "${HONEYPOT_PUBLISH_8080:-8080}:8080"
+      - "${HONEYPOT_PUBLISH_8081:-8081}:8081"
+    networks:
+      - honeypot-net
+
+  # SSH 蜜罐:Paramiko 假 shell,捕获暴力破解与命令,默认暴露 2222
+  ssh-honeypot:
+    build: .
+    container_name: honeypot-ssh
+    restart: unless-stopped
+    entrypoint: [""]
+    env_file: .env
+    environment:
+      HONEYPOT_API_URL: http://app:5000
+      HONEYPOT_NODE_NAME: ${HONEYPOT_SSH_NODE_NAME:-ssh-honeypot-1}
+      HONEYPOT_SSH_PORT: "2222"
+      HONEYPOT_SSH_ACCEPT_ANY: "true"
+    command: ["python", "-m", "honeypots.ssh_honeypot"]
+    depends_on:
+      - app
+    ports:
+      - "${HONEYPOT_PUBLISH_2222:-2222}:2222"
+    networks:
+      - honeypot-net
+
+  # Telnet 蜜罐:模拟 Cisco 路由器登录界面,默认暴露 2323
+  telnet-honeypot:
+    build: .
+    container_name: honeypot-telnet
+    restart: unless-stopped
+    entrypoint: [""]
+    env_file: .env
+    environment:
+      HONEYPOT_API_URL: http://app:5000
+      HONEYPOT_NODE_NAME: ${HONEYPOT_TELNET_NODE_NAME:-telnet-honeypot-1}
+      HONEYPOT_TELNET_PORT: "2323"
+    command: ["python", "-m", "honeypots.telnet_honeypot"]
+    depends_on:
+      - app
+    ports:
+      - "${HONEYPOT_PUBLISH_2323:-2323}:2323"
+    networks:
+      - honeypot-net
+
+  # Redis 蜜罐:RESP 协议假实例,识别写公钥/主从复制 RCE 等高危利用,默认暴露 6379
+  redis-honeypot:
+    build: .
+    container_name: honeypot-redis-hp
+    restart: unless-stopped
+    entrypoint: [""]
+    env_file: .env
+    environment:
+      HONEYPOT_API_URL: http://app:5000
+      HONEYPOT_NODE_NAME: ${HONEYPOT_REDIS_NODE_NAME:-redis-honeypot-1}
+      HONEYPOT_REDIS_PORT: "6379"
+    command: ["python", "-m", "honeypots.redis_honeypot"]
+    depends_on:
+      - app
+    ports:
+      - "${HONEYPOT_PUBLISH_6379:-6379}:6379"
+    networks:
+      - honeypot-net
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: honeypot-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    volumes:
+      # 项目内是完整配置(含 events/http),挂载到 nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # 静态资源由 Nginx 直接提供
+      - ./static:/var/www/static:ro
+    networks:
+      - honeypot-net
+
+networks:
+  honeypot-net:
+
+volumes:
+  mysql_data:
+  redis_data:

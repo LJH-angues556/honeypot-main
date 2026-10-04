@@ -1,0 +1,6 @@
+{% extends 'email/base.html' %}
+{% block content %}
+<h2 style="margin:0 0 16px;">SMTP 测试邮件</h2>
+<p>如果您收到这封邮件，说明蜜罐系统的 SMTP 邮件配置工作正常。</p>
+<p style="color:#6b7280;">发送时间（UTC）：{{ sent_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+{% endblock %}

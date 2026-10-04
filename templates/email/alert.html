@@ -1,0 +1,30 @@
+{% extends 'email/base.html' %}
+{% block content %}
+<h2 style="margin:0 0 8px;color:#dc2626;">⚠️ 检测到 {{ event.severity|upper }} 级别攻击</h2>
+<p style="color:#6b7280;margin-top:0;">捕获时间（UTC）：{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+
+<table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;width:120px;color:#6b7280;">来源 IP</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;"><strong>{{ event.ip_address }}</strong></td>
+  </tr>
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;">请求</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;">{{ event.method }} {{ event.path }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;">蜜罐服务</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;">{{ event.honeypot_service or '—' }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;">攻击签名</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;">{{ event.signature or '—' }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;">严重级别</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;">{{ event.severity }}</td>
+  </tr>
+</table>
+
+<p>请及时登录蜜罐管理后台查看详情并评估是否需要封禁该 IP。</p>
+{% endblock %}

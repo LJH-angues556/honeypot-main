@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}攻击事件 #{{ event.id }}{% endblock %}
+{% block header %}攻击事件 #{{ event.id }}{% endblock %}
+{% block content %}
+<div class="back-link">
+    <a href="{{ url_for('admin.attacks') }}" class="btn btn-secondary">← 返回攻击事件列表</a>
+</div>
+
+<!-- 事件基本信息 -->
+<div class="detail-card">
+    <h3>事件详情</h3>
+    <div class="detail-grid">
+        <div class="detail-item">
+            <span class="detail-label">事件 ID</span>
+            <span class="detail-value">{{ event.id }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">捕获时间 (UTC)</span>
+            <span class="detail-value">{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') if event.timestamp else '—' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">来源 IP</span>
+            <span class="detail-value">{{ event.ip_address or '—' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">请求方法</span>
+            <span class="detail-value">{{ event.method or '—' }}</span>
+        </div>
+        <div class="detail-item detail-item-wide">
+            <span class="detail-label">请求路径</span>
+            <span class="detail-value">{{ event.path or '—' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">蜜罐服务</span>
+            <span class="detail-value">{{ event.honeypot_service or '—' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">上报节点</span>
+            <span class="detail-value">
+                {% if event.node %}
+                {{ event.node.name }}
+                <span class="badge {% if event.node.is_online %}badge-success{% else %}badge-muted{% endif %} badge-inline">
+                    {{ event.node.display_status }}
+                </span>
+                {% else %}—{% endif %}
+            </span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">攻击签名</span>
+            <span class="detail-value">{{ event.signature or '—' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">严重级别</span>
+            <span class="detail-value severity-{{ event.severity or 'unknown' }}">{{ event.severity or '—' }}</span>
+        </div>
+        <div class="detail-item">
+            <span class="detail-label">关联攻击者</span>
+            <span class="detail-value">
+                {% if event.attacker_id %}
+                <a href="{{ url_for('admin.attacker_detail', profile_id=event.attacker_id) }}">{{ event.ip_address }} (#{{ event.attacker_id }})</a>
+                {% if event.attacker and event.attacker.is_blocked %}
+                <span class="badge badge-danger badge-inline">已封禁</span>
+                {% endif %}
+                {% else %}
+                —
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- 完整 headers / payload,JSON 格式化 + 折叠展开 -->
+    <div class="json-section">
+        <details open>
+            <summary>请求 Headers</summary>
+            {% if event.headers %}
+            <pre class="json-block">{{ event.headers | tojson(indent=2) }}</pre>
+            {% else %}
+            <pre class="json-block">无</pre>
+            {% endif %}
+        </details>
+        <details open>
+            <summary>请求 Payload</summary>
+            {% if event.payload %}
+            <pre class="json-block">{{ event.payload | tojson(indent=2) }}</pre>
+            {% else %}
+            <pre class="json-block">无</pre>
+            {% endif %}
+        </details>
+    </div>
+</div>
+{% endblock %}

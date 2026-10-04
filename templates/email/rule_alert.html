@@ -1,0 +1,26 @@
+{% extends 'email/base.html' %}
+{% block content %}
+<h2 style="margin:0 0 8px;color:#dc2626;">🚨 告警规则触发:{{ rule.name }}</h2>
+<p style="color:#6b7280;margin-top:0;">触发时间（UTC）：{{ event.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+
+<table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;width:120px;color:#6b7280;">规则类型</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;">{{ rule.rule_type }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;">来源 IP</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;"><strong>{{ event.ip_address }}</strong></td>
+  </tr>
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;">触发详情</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;">{{ detail }}</td>
+  </tr>
+  <tr>
+    <td style="padding:8px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;">关联事件</td>
+    <td style="padding:8px;border:1px solid #e5e7eb;">#{{ event.id }} · {{ event.honeypot_service }} · {{ event.signature or '—' }}</td>
+  </tr>
+</table>
+
+<p>请及时登录蜜罐管理后台查看详情并评估处置措施。</p>
+{% endblock %}

@@ -1,0 +1,22 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.5
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+Flask-Limiter==3.5.0
+PyMySQL==1.1.0
+# MySQL 8 默认 caching_sha2_password 认证,PyMySQL 依赖 cryptography 完成握手
+cryptography==43.0.1
+redis==5.0.1
+python-dotenv==1.0.1
+WTForms==3.1.2
+email-validator==2.2.0
+rq==1.15.1
+geoip2==4.7.0
+requests==2.31.0
+Flask-Mail==0.9.1
+# 第三阶段蜜罐依赖
+paramiko==3.4.0
+openpyxl==3.1.5
+gunicorn==21.2.0
+pytest==8.3.4

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}设置{% endblock %}
+{% block header %}设置{% endblock %}
+{% block content %}
+<div class="settings-container">
+    {% if current_user.is_super_admin %}
+    <div class="settings-card">
+        <h3>系统管理</h3>
+        <div class="settings-section">
+            <a href="{{ url_for('settings.system_settings') }}" class="btn btn-primary">进入系统设置</a>
+            <p class="hint-text" style="margin-top:8px;">注册开关、GeoIP、数据保留、API 限流、SMTP 邮件等全局配置。</p>
+        </div>
+    </div>
+    {% endif %}
+    <div class="settings-card">
+        <h3>账户设置</h3>
+        <div class="settings-section">
+            <h4>修改密码</h4>
+            <form method="post" action="{{url_for('settings.change_password', _external=True)  }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label>原密码</label>
+                    <input type="password" name="old_password" required>
+                </div>
+                <div class="form-group">
+                    <label>新密码</label>
+                    <input type="password" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label>确认新密码</label>
+                    <input type="password" name="confirm_password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">修改密码</button>
+            </form>
+        </div>
+        
+        <div class="settings-section">
+            <h4>通知设置</h4>
+            <form method="post" action="{{ url_for('settings.update_notifications', _external=True) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="email_notifications" {% if current_user.email_notifications %}checked{% endif %}>
+                        邮箱通知（有人尝试入侵时发送邮件）
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">保存设置</button>
+            </form>
+        </div>
+        
+        <div class="settings-section">
+            <h4>危险操作</h4>
+            <div class="danger-zone">
+                <p>删除账号将永久移除所有数据，此操作不可撤销。</p>
+                <form method="post" action="{{ url_for('settings.delete_account', _external=True) }}" onsubmit="return confirm('确定要删除账号吗？此操作不可撤销！')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">删除账号</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

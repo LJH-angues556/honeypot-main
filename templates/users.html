@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}用户管理{% endblock %}
+{% block header %}用户管理{% endblock %}
+{% block content %}
+
+<div class="filter-section">
+    <form method="post" action="{{ url_for('admin.create_user') }}" class="filter-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="filter-group">
+            <label>用户名:</label>
+            <input type="text" name="username" placeholder="登录用户名" required maxlength="80">
+        </div>
+        <div class="filter-group">
+            <label>邮箱:</label>
+            <input type="email" name="email" placeholder="可选">
+        </div>
+        <div class="filter-group">
+            <label>初始密码:</label>
+            <input type="text" name="password" placeholder="至少 6 位" required minlength="6">
+        </div>
+        <div class="filter-group">
+            <label>角色:</label>
+            <select name="role">
+                {% for r in roles %}
+                <option value="{{ r }}">{{ role_labels[r] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">创建用户</button>
+    </form>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>用户名</th>
+                <th>邮箱</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr class="{{ '' if u.active else 'row-disabled' }}">
+                <td>{{ u.id }}</td>
+                <td>{{ u.username }}{% if u.id == current_user.id %} <span class="badge badge-muted">我</span>{% endif %}</td>
+                <td>{{ u.email or '—' }}</td>
+                <td><span class="nav-role-badge nav-role-badge--{{ u.role }}">{{ u.role_label }}</span></td>
+                <td>
+                    {% if u.active %}
+                    <span class="badge badge-success">启用</span>
+                    {% else %}
+                    <span class="badge badge-danger">禁用</span>
+                    {% endif %}
+                </td>
+                <td>{{ u.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="cell-actions">
+                    <form method="post" action="{{ url_for('admin.change_user_role', user_id=u.id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <select name="role" class="select-sm"
+                                onchange="if(confirm('确认将 {{ u.username }} 的角色改为「'+this.options[this.selectedIndex].text+'」?')) this.form.submit();">
+                            {% for r in roles %}
+                            <option value="{{ r }}" {% if u.role == r %}selected{% endif %}>{{ role_labels[r] }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    <form method="post" action="{{ url_for('admin.toggle_user', user_id=u.id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% if u.active %}
+                        <button type="submit" class="btn btn-sm btn-secondary"
+                                onclick="return confirm('确认禁用 {{ u.username }}? 禁用后该用户将无法登录。');">禁用</button>
+                        {% else %}
+                        <button type="submit" class="btn btn-sm btn-primary">启用</button>
+                        {% endif %}
+                    </form>
+                    <form method="post" action="{{ url_for('admin.reset_user_password', user_id=u.id) }}" class="inline-form"
+                          onsubmit="var r=prompt('为 {{ u.username }} 设置新密码(至少 6 位):',''); if(r===null){return false;} if(r.length<6){alert('密码至少 6 位');return false;} this.new_password.value=r;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="new_password" value="">
+                        <button type="submit" class="btn btn-sm btn-secondary">重置密码</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="empty-text">暂无用户</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="filter-section" style="margin-top:18px;">
+    <p class="text-muted">
+        角色权限:<strong>超级管理员</strong> = 全部权限 + 用户管理 + 系统设置 + 节点管理;
+        <strong>管理员</strong> = 查看数据 + 封禁 IP + 告警规则 + 模拟攻击;
+        <strong>只读观察员</strong> = 仅可查看,不能做任何修改。
+    </p>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}可视化地图{% endblock %}
+{% block header %}全球攻击分布地图{% endblock %}
+{% block content %}
+<div class="map-container">
+    <div class="map-header">
+        <h3>攻击来源国家分布</h3>
+        <p>鼠标悬停查看详细信息</p>
+    </div>
+    <div id="world-map" class="map-chart"></div>
+
+    <div class="map-legend">
+        <h4>图例</h4>
+        <div class="legend-item">
+            <span class="legend-color" style="background:#ff6b6b;"></span>
+            <span>高攻击频率 (>100次)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background:#ffa726;"></span>
+            <span>中攻击频率 (10-100次)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background:#66bb6a;"></span>
+            <span>低攻击频率 (1-10次)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-color" style="background:#e0e0e0;"></span>
+            <span>无攻击记录</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+<script>
+(function () {
+    const css = getComputedStyle(document.documentElement);
+    const textColor = css.getPropertyValue('--text').trim();
+
+    const attackData = {{ attacks_by_country | tojson }};
+    const mapData = attackData.map(item => ({
+        name: item.country || '未知',
+        value: item.count
+    }));
+
+    const mapChart = echarts.init(document.getElementById('world-map'));
+
+    const option = {
+        title: { text: '全球攻击分布', left: 'center', textStyle: { color: textColor } },
+        tooltip: {
+            trigger: 'item',
+            formatter: p => p.data ? `${p.name}<br/>攻击次数: ${p.value}` : `${p.name}<br/>攻击次数: 0`
+        },
+        visualMap: {
+            min: 0,
+            max: Math.max(...mapData.map(d => d.value), 1),
+            left: 'left',
+            top: 'bottom',
+            text: ['高', '低'],
+            textStyle: { color: textColor },
+            calculable: true,
+            inRange: { color: ['#e0e0e0', '#ff6b6b'] }
+        },
+        series: [{
+            name: '攻击次数',
+            type: 'map',
+            map: 'world',
+            roam: true,
+            label: { color: textColor },
+            emphasis: { label: { show: true } },
+            data: mapData
+        }]
+    };
+
+    /* 加载世界地图 geoJSON(echarts 5 包不再附带地图数据,使用 4.x 包内的 world.json) */
+    fetch("{{ url_for('static', filename='json/world.json') }}")
+        .then(res => res.json())
+        .then(json => {
+            echarts.registerMap('world', json);
+            mapChart.setOption(option);
+        })
+        .catch(err => {
+            console.error('地图数据加载失败:', err);
+            mapChart.setOption({ title: { text: '地图加载失败', left: 'center', textStyle: { color: textColor } } });
+        });
+
+    window.addEventListener('resize', () => mapChart.resize());
+})();
+</script>
+{% endblock %}

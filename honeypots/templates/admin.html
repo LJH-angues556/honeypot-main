@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>设备管理后台 - 登录</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; height:100vh; font-family:"Segoe UI",Arial,sans-serif;
+        background:linear-gradient(135deg,#1e3a5f 0%,#0f1f33 100%); color:#e8ecf5; }
+  .box { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+         width:360px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+         border-radius:10px; padding:34px 30px; backdrop-filter:blur(6px); }
+  .box h1 { margin:0 0 6px; font-size:20px; text-align:center; }
+  .box p.sub { margin:0 0 24px; text-align:center; font-size:12px; color:#9fb3c8; }
+  .field { margin-bottom:18px; }
+  .field label { display:block; font-size:13px; margin-bottom:6px; color:#bcd0e6; }
+  .field input { width:100%; padding:10px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.25);
+                 background:rgba(255,255,255,0.1); color:#fff; font-size:14px; }
+  .field input::placeholder { color:#7d92aa; }
+  .btn { width:100%; padding:11px; border:none; border-radius:6px; background:#2563eb;
+         color:#fff; font-size:15px; font-weight:600; cursor:pointer; margin-top:6px; }
+  .btn:hover { background:#1d4ed8; }
+  .err { background:rgba(220,38,38,0.18); border:1px solid rgba(220,38,38,0.5);
+         border-radius:6px; padding:9px 12px; font-size:13px; margin-bottom:16px; }
+  .foot { text-align:center; margin-top:22px; font-size:11px; color:#6b7f96; }
+</style>
+</head>
+<body>
+  <form class="box" method="post" action="{{ login_path }}">
+    <h1>🔒 设备管理后台</h1>
+    <p class="sub">Network Gateway Admin Console v3.2</p>
+    {% if login_error %}
+    <div class="err">登录失败：用户名或密码错误，本次尝试已被记录。</div>
+    {% endif %}
+    <div class="field">
+      <label>管理员账号</label>
+      <input type="text" name="username" placeholder="admin" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input type="password" name="password" placeholder="请输入密码">
+    </div>
+    <button class="btn" type="submit">登 录</button>
+    <div class="foot">Copyright © 2024 Network Equipment Inc.</div>
+  </form>
+</body>
+</html>

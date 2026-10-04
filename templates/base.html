@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="{{ current_user.theme_preference if current_user.is_authenticated and current_user.theme_preference else 'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="authenticated" content="{{ '1' if current_user.is_authenticated else '0' }}">
+    <title>{% block title %}蜜罐后台{% endblock %}</title>
+    <!-- 渲染前先应用本地缓存的主题,避免刷新时主题闪烁 -->
+    <script>
+        (function () {
+            var saved = localStorage.getItem('theme');
+            if (saved === 'dark' || saved === 'light') {
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
+</head>
+<body>
+    <!-- 主题切换 -->
+    <div class="theme-toggle">
+        <button id="theme-btn" class="btn-icon" title="切换深浅色主题" aria-label="切换主题">🌓</button>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h2>🐝 蜜罐管理</h2>
+            <nav>
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-item">仪表盘</a>
+                <a href="{{ url_for('admin.attacks') }}" class="nav-item">攻击事件</a>
+                <a href="{{ url_for('admin.attackers') }}" class="nav-item">攻击者画像</a>
+                <a href="{{ url_for('admin.blacklist') }}" class="nav-item">IP 黑名单</a>
+                <a href="{{ url_for('admin.nodes') }}" class="nav-item">蜜罐节点</a>
+                <a href="{{ url_for('admin.alert_rules') }}" class="nav-item">告警规则</a>
+                <a href="{{ url_for('admin.stats') }}" class="nav-item">数据统计</a>
+                <a href="{{ url_for('admin.database') }}" class="nav-item">数据库</a>
+                <a href="{{ url_for('admin.audit_logs') }}" class="nav-item">审计日志</a>
+                <a href="{{ url_for('admin.map') }}" class="nav-item">可视化地图</a>
+                {% if current_user.is_super_admin %}
+                <a href="{{ url_for('admin.users') }}" class="nav-item nav-item--super">用户管理</a>
+                {% endif %}
+            </nav>
+
+            <div class="nav-bottom">
+                <div class="nav-user" title="{{ current_user.username }}({{ current_user.role_label }})">
+                    <span class="nav-role-badge nav-role-badge--{{ current_user.role }}">{{ current_user.role_label }}</span>
+                    <span class="nav-username">{{ current_user.username }}</span>
+                </div>
+                {% if current_user.is_super_admin %}
+                <a href="{{ url_for('settings.system_settings') }}" class="nav-item">系统设置</a>
+                {% endif %}
+                <a href="{{ url_for('admin.settings') }}" class="nav-item">个人设置</a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item">退出</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <h1>{% block header %}{% endblock %}</h1>
+            </div>
+            <div class="content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var btn = document.getElementById('theme-btn');
+            var html = document.documentElement;
+            var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            var authenticated = document.querySelector('meta[name="authenticated"]').getAttribute('content') === '1';
+
+            btn.addEventListener('click', function () {
+                var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                // 登录用户同步主题偏好到服务端;失败不影响本地切换
+                if (authenticated) {
+                    fetch('{{ url_for("settings.toggle_theme") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ theme: next })
+                    }).catch(function () {});
+                }
+            });
+        })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

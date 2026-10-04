@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}数据库{% endblock %}
+{% block header %}数据库{% endblock %}
+{% block content %}
+    <div class="table-container">
+        <h3>表与行数</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>表名</th>
+                    <th>行数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tables %}
+                <tr>
+                    <td>{{ t.name }}</td>
+                    <td>{{ t.rows }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not tables %}
+            <p>未读取到表信息，可能数据库未初始化或权限不足。</p>
+        {% endif %}
+    </div>
+{% endblock %}

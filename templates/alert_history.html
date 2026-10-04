@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}告警历史{% endblock %}
+{% block header %}告警历史{% endblock %}
+{% block content %}
+
+<div class="back-link">
+    <a href="{{ url_for('admin.alert_rules') }}" class="btn btn-secondary">← 返回告警规则</a>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+        <tr><th>时间</th><th>规则</th><th>类型</th><th>IP</th><th>关联事件</th><th>详情</th></tr>
+        </thead>
+        <tbody>
+        {% for h in pagination.items %}
+        <tr>
+            <td>{{ h.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>{{ h.rule.name if h.rule else '(已删除)' }}</td>
+            <td>{{ rule_types.get(h.rule.rule_type, '—') if h.rule else '—' }}</td>
+            <td><code>{{ h.ip_address }}</code></td>
+            <td>
+                {% if h.event_id %}
+                    <a href="{{ url_for('admin.attack_detail', event_id=h.event_id) }}">#{{ h.event_id }}</a>
+                {% else %}—{% endif %}
+            </td>
+            <td class="text-muted">{{ h.detail }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;padding:30px;">暂无告警历史</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% for p in range(1, pagination.pages + 1) %}
+        {% if p == pagination.page %}
+            <span class="page-current">{{ p }}</span>
+        {% else %}
+            <a href="{{ url_for('admin.alert_history', page=p) }}">{{ p }}</a>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

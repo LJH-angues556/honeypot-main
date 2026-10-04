@@ -1,0 +1,243 @@
+2026-10-03 11:51:30,155 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 11:51:30,231 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 11:51:30,304 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 72, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 607, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 11:51:30,395 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 11:51:30,494 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 11:51:31,125 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 11:51:31,127 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 11:51:31,144 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 11:51:31,176 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 11:55:04,194 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 11:55:04,267 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 11:55:04,343 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 72, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 11:55:04,475 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 11:55:04,561 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 11:55:05,328 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 11:55:05,330 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 11:55:05,347 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 11:55:05,379 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 12:00:14,142 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 12:00:14,216 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 12:00:14,293 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 72, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 12:00:14,426 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 12:00:14,513 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 12:00:15,233 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 12:00:15,236 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 12:00:15,255 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 12:00:15,291 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 12:14:29,753 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 12:14:29,831 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 12:14:29,907 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 72, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 12:14:31,043 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 12:14:31,127 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 12:14:33,405 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 12:14:33,407 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 12:14:33,430 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 12:14:33,465 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 12:14:33,492 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 12:14:33,514 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 12:14:33,516 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 12:40:57,385 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 12:40:57,471 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 12:40:57,560 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 72, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 12:40:57,683 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 12:40:57,795 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 12:40:58,534 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 12:40:58,541 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 12:40:58,563 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 12:40:58,602 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 12:40:58,627 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 12:40:58,697 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 12:40:58,699 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 13:07:08,605 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 13:07:08,685 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 13:07:08,765 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 72, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 13:07:08,867 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 13:07:08,965 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 13:07:09,844 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 13:07:09,847 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 13:07:09,866 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 13:07:09,912 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 13:07:09,942 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 13:07:09,969 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 13:07:09,971 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 13:23:24,330 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 13:23:24,413 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 13:23:24,497 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 13:23:24,597 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 13:23:24,689 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 13:23:25,459 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 13:23:25,461 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 13:23:25,486 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 13:23:25,525 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 13:23:25,557 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 13:23:25,584 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 13:23:25,587 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 13:30:37,256 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 13:30:37,344 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 13:30:37,426 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 13:30:37,533 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 13:30:37,634 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 13:30:38,416 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 13:30:38,419 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 13:30:38,442 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 13:30:38,486 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 13:30:38,517 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 13:30:38,544 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 13:30:38,547 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 13:58:55,950 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 13:58:56,038 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 13:58:56,131 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 609, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 13:58:56,236 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 13:58:56,337 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 13:58:57,180 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 13:58:57,183 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 13:58:57,204 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 13:58:57,248 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 13:58:57,277 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 13:58:57,311 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 13:58:57,314 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 15:08:23,757 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 15:08:23,841 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 15:08:23,926 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 651, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 15:08:24,036 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 15:08:24,134 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 15:08:24,966 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 15:08:24,968 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 15:08:24,990 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 15:08:25,089 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 15:08:25,122 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 15:08:25,150 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 15:08:25,152 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 15:29:50,579 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 15:29:50,677 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 15:29:50,783 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 653, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 15:29:50,894 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 15:29:51,007 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 15:29:51,906 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 15:29:51,909 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 15:29:51,931 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 15:29:51,977 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 15:29:52,011 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 15:29:52,041 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 15:29:52,043 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 15:45:11,839 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 15:45:11,925 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 15:45:12,009 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 654, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 15:45:12,113 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 15:45:12,211 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 15:45:12,996 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 15:45:12,998 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 15:45:13,019 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 15:45:13,064 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 15:45:13,095 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 15:45:13,123 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 15:45:13,125 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 15:52:58,962 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 15:52:59,063 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 15:52:59,167 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 654, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 15:52:59,421 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 15:52:59,547 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 15:53:00,594 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 15:53:00,599 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 15:53:00,692 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 15:53:00,765 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 15:53:00,816 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 15:53:00,866 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 15:53:00,870 WARNING [app] 忽略非法 client_ip: 'not-an-ip'
+2026-10-03 16:26:42,738 INFO [app] SMTP 未启用,跳过邮件: s
+2026-10-03 16:26:42,844 INFO [app] 邮件已发送至 ['admin@test.com']: 测试
+2026-10-03 16:26:42,958 ERROR [app] 邮件发送失败: smtp down
+Traceback (most recent call last):
+  File "/app/app/email_utils.py", line 78, in send_email
+    mail.send(msg)
+  File "/app/tests/test_core.py", line 654, in boom
+    raise RuntimeError('smtp down')
+RuntimeError: smtp down
+2026-10-03 16:26:43,134 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐日报】2026-10-02 攻击 1 起
+2026-10-03 16:26:43,262 INFO [app] 邮件已发送至 ['admin@test.com']: 【蜜罐告警】HIGH 攻击来自 8.8.5.5
+2026-10-03 16:26:44,495 INFO [app] 节点 hp-1 已注册 id=1
+2026-10-03 16:26:44,498 INFO [app] 节点 hp-1 已刷新 id=1
+2026-10-03 16:26:44,601 INFO [app] 节点 hp-2 已注册 id=1
+2026-10-03 16:26:44,681 INFO [app] 节点 hp-5 已注册 id=1
+2026-10-03 16:26:44,737 INFO [app] 节点 hp-6 已注册 id=1
+2026-10-03 16:26:44,808 INFO [app] 节点 hp-7 已注册 id=1
+2026-10-03 16:26:44,813 WARNING [app] 忽略非法 client_ip: 'not-an-ip'

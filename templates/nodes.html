@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}蜜罐节点{% endblock %}
+{% block header %}蜜罐节点管理{% endblock %}
+{% block content %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+{% if current_user.is_super_admin %}
+<div class="filter-section">
+    <form method="post" action="{{ url_for('admin.create_node') }}" class="filter-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="filter-group">
+            <label>新建节点:</label>
+            <input type="text" name="name" placeholder="节点名称,如 http-hp-8080" required maxlength="64">
+        </div>
+        <div class="filter-group">
+            <label>类型:</label>
+            <select name="service_type">
+                <option value="http">http</option>
+                <option value="ssh">ssh</option>
+                <option value="telnet">telnet</option>
+                <option value="redis">redis</option>
+                <option value="other">other</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">创建节点</button>
+        <div class="btn-group-right">
+            <span class="text-muted">在线 {{ online_count }} / {{ total_nodes }} · 超过 5 分钟无心跳判定离线</span>
+        </div>
+    </form>
+</div>
+{% else %}
+<div class="filter-section">
+    <div class="readonly-hint">节点创建/删除仅超级管理员可操作,当前为只读视图。在线 {{ online_count }} / {{ total_nodes }} · 超过 5 分钟无心跳判定离线</div>
+</div>
+{% endif %}
+
+<div class="nodes-grid">
+    {% for node in nodes %}
+    <div class="node-card">
+        <div class="node-card-header">
+            <span class="status-dot {{ node.display_status }}"></span>
+            <strong class="node-name">{{ node.name }}</strong>
+            <span class="badge {% if node.is_online %}badge-success{% else %}badge-muted{% endif %}">
+                {{ node.display_status }}
+            </span>
+        </div>
+        <div class="node-meta">
+            <div><span class="text-muted">类型:</span> {{ node.service_type }}</div>
+            <div><span class="text-muted">IP:</span> {{ node.ip_address or '—' }}</div>
+            <div><span class="text-muted">最近心跳:</span>
+                {{ node.last_heartbeat.strftime('%Y-%m-%d %H:%M:%S') if node.last_heartbeat else '从未' }}
+            </div>
+            <div><span class="text-muted">创建时间:</span> {{ node.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+            <div class="node-key-row">
+                <span class="text-muted">密钥:</span>
+                <code class="node-key" title="{{ node.node_key }}">{{ node.node_key[:8] }}…{{ node.node_key[-4:] }}</code>
+            </div>
+        </div>
+        <div class="node-card-actions">
+            {% if current_user.is_super_admin %}
+            <form method="post" action="{{ url_for('admin.delete_node', node_id=node.id) }}"
+                  onsubmit="return confirm('确定删除节点 {{ node.name }} 吗？历史事件将保留。');"
+                  style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-secondary">删除</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="table-container">
+        <p class="empty-text" style="padding:30px;text-align:center;">
+            暂无蜜罐节点。可在上方手动创建,或启动蜜罐程序后由其自动注册。
+        </p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

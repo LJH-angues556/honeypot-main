@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 - 无访问权限</title>
+    <script>
+        (function () {
+            var saved = localStorage.getItem('theme');
+            if (saved === 'dark' || saved === 'light') {
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
+</head>
+<body class="error-page">
+    <div class="theme-toggle">
+        <button id="theme-btn" class="btn-icon" title="切换深浅色主题" aria-label="切换主题">🌓</button>
+    </div>
+    <div class="error-box">
+        <div class="error-code">403</div>
+        <h1>无访问权限</h1>
+        <p class="error-desc">你的账号没有访问该页面的权限,请使用管理员账号登录。</p>
+        <div class="error-actions">
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-primary">切换账号</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">前往登录</a>
+        </div>
+    </div>
+    <script>
+        document.getElementById('theme-btn').addEventListener('click', function () {
+            var html = document.documentElement;
+            var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - 页面未找到</title>
+    <script>
+        (function () {
+            var saved = localStorage.getItem('theme');
+            if (saved === 'dark' || saved === 'light') {
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
+</head>
+<body class="error-page">
+    <div class="theme-toggle">
+        <button id="theme-btn" class="btn-icon" title="切换深浅色主题" aria-label="切换主题">🌓</button>
+    </div>
+    <div class="error-box">
+        <div class="error-code">404</div>
+        <h1>页面未找到</h1>
+        <p class="error-desc">你访问的页面不存在或已被移动。</p>
+        <div class="error-actions">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary">前往登录</a>
+            <a href="{{ url_for('auth.root') }}" class="btn btn-secondary">返回首页</a>
+        </div>
+    </div>
+    <script>
+        document.getElementById('theme-btn').addEventListener('click', function () {
+            var html = document.documentElement;
+            var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}IP 黑名单{% endblock %}
+{% block header %}IP 黑名单{% endblock %}
+{% block content %}
+<div class="filter-section">
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <label>IP地址:</label>
+            <input type="text" name="ip" value="{{ ip }}" placeholder="输入IP地址">
+        </div>
+        <button type="submit" class="btn btn-primary">筛选</button>
+        <a href="{{ url_for('admin.blacklist') }}" class="btn btn-secondary">清除</a>
+        <div class="btn-group-right">
+            <a href="{{ url_for('admin.export_blacklist', format='txt') }}" class="btn btn-sm">导出 TXT</a>
+            <a href="{{ url_for('admin.export_blacklist', format='csv') }}" class="btn btn-sm">导出 CSV</a>
+        </div>
+    </form>
+</div>
+
+<form method="post" action="{{ url_for('admin.blacklist_unblock_batch') }}" id="blacklist-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    {% if current_user.is_admin %}<th><input type="checkbox" id="select-all" title="全选"></th>{% endif %}
+                    <th>IP地址</th>
+                    <th>国家/城市</th>
+                    <th>封禁原因</th>
+                    <th>封禁时间</th>
+                    <th>最近出现</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in profiles %}
+                <tr class="row-blocked">
+                    {% if current_user.is_admin %}<td><input type="checkbox" name="ids" value="{{ p.id }}" class="row-check"></td>{% endif %}
+                    <td><a href="{{ url_for('admin.attacker_detail', profile_id=p.id) }}">{{ p.ip_address }}</a></td>
+                    <td>{{ p.country or '—' }}{% if p.city %} / {{ p.city }}{% endif %}</td>
+                    <td>{{ p.block_reason or '—' }}</td>
+                    <td>{{ p.blocked_at.strftime('%Y-%m-%d %H:%M:%S') if p.blocked_at else '—' }}</td>
+                    <td>{{ p.last_seen.strftime('%Y-%m-%d %H:%M') if p.last_seen else '—' }}</td>
+                    <td class="cell-actions">
+                        {% if current_user.is_admin %}
+                        <button type="submit" formaction="{{ url_for('admin.unblock_attacker', profile_id=p.id) }}"
+                                formmethod="post" class="btn btn-sm btn-secondary">解封</button>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ 7 if current_user.is_admin else 6 }}" class="empty-text">黑名单为空，可在攻击者画像页封禁恶意 IP</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="table-toolbar">
+            {% if current_user.is_admin %}
+            <button type="submit" class="btn btn-secondary"
+                    onclick="return confirm('确定批量解封勾选的 IP 吗？')">批量解封</button>
+            {% endif %}
+            <span class="text-muted">共 {{ pagination.total }} 个被封禁 IP · TXT 每行一个 IP，可直接用于 iptables 等防火墙配置</span>
+        </div>
+
+        {% if pagination %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('admin.blacklist', page=pagination.prev_num, ip=ip) }}" class="btn btn-sm">上一页</a>
+            {% endif %}
+            <span class="pagination-info">
+                第 {{ pagination.page }} 页，共 {{ pagination.pages }} 页，总计 {{ pagination.total }} 条记录
+            </span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('admin.blacklist', page=pagination.next_num, ip=ip) }}" class="btn btn-sm">下一页</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    // 全选 / 取消全选
+    var selectAll = document.getElementById('select-all');
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            document.querySelectorAll('.row-check').forEach(function (cb) {
+                cb.checked = selectAll.checked;
+            });
+        });
+    }
+})();
+</script>
+{% endblock %}

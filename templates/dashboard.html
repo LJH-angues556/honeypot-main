@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}仪表盘{% endblock %}
+{% block header %}蜜罐管理仪表盘{% endblock %}
+{% block content %}
+<div class="dash-wrapper">
+  <div class="dash-grid">
+    <!-- 统计卡片 -->
+    <div class="stat-card"><h3 id="stat-total-attacks">{{ total_attacks }}</h3><p>总攻击次数</p></div>
+    <div class="stat-card"><h3 id="stat-unique-attackers">{{ unique_attackers }}</h3><p>攻击者数量</p></div>
+    <div class="stat-card"><h3>{{ attack_types|length }}</h3><p>攻击类型</p></div>
+    <div class="stat-card"><h3>{{ country_stats|length }}</h3><p>涉及国家</p></div>
+    <div class="stat-card stat-card--danger"><h3>{{ malicious_attackers }} <small class="stat-ratio">({{ threat_ratio }}%)</small></h3><p>已知威胁 IP</p></div>
+
+    <!-- 操作区 -->
+    <div class="dash-card">
+      <h4>快捷操作</h4>
+      {% if current_user.is_admin %}
+      <details class="sim-details">
+        <summary>🧪 自定义模拟攻击参数</summary>
+        <form method="post" action="{{ url_for('admin.simulate_attack') }}" class="sim-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="sim-grid">
+            <label>IP 地址<input type="text" name="ip" class="input-field" placeholder="留空随机"></label>
+            <label>国家代码<input type="text" name="country" class="input-field" placeholder="如 CN,留空随机" maxlength="8"></label>
+            <label>严重级别
+              <select name="severity" class="input-field">
+                <option value="">随机</option>
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+              </select>
+            </label>
+            <label>蜜罐服务
+              <select name="honeypot_service" class="input-field">
+                <option value="">随机</option>
+                <option value="web">web</option>
+                <option value="ssh">ssh</option>
+                <option value="telnet">telnet</option>
+                <option value="redis">redis</option>
+              </select>
+            </label>
+            <label>攻击签名<input type="text" name="signature" class="input-field" placeholder="如 sql_injection,留空随机"></label>
+            <label>批量条数<input type="number" name="count" class="input-field" value="1" min="1" max="100"></label>
+            <label class="sim-grid-wide">User-Agent<input type="text" name="user_agent" class="input-field" placeholder="留空使用默认 UA"></label>
+          </div>
+          <button type="submit" class="btn btn-primary">按参数生成</button>
+        </form>
+      </details>
+      <form method="post" action="{{ url_for('admin.simulate_attack') }}" class="inline-form" style="margin-top:10px;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-success">⚡ 一键随机攻击</button>
+      </form>
+      {% endif %}
+      <a href="{{ url_for('admin.export_stats') }}" class="btn btn-primary">📊 导出数据</a>
+      <small class="update-time">最新更新：{{ latest_update.timestamp if latest_update else '无数据' }}</small>
+    </div>
+
+    <!-- Top 排行 -->
+    <div class="dash-card">
+      <h4>🔥 Top 攻击类型</h4>
+      <ol>
+        {% for attack_type, count in attack_types[:3] %}
+        <li>{{ attack_type or '未知' }}: {{ count }}次</li>
+        {% else %}
+        <li>暂无数据</li>
+        {% endfor %}
+      </ol>
+    </div>
+
+    <div class="dash-card">
+      <h4>🌍 Top 攻击地区</h4>
+      <ol>
+        {% for country, count in country_stats[:3] %}
+        <li>{{ country or '未知' }}: {{ count }}次</li>
+        {% else %}
+        <li>暂无数据</li>
+        {% endfor %}
+      </ol>
+    </div>
+
+    <!-- 图表 -->
+    <div class="dash-card full">
+      <h4>攻击类型分布</h4>
+      <div id="attack-types-chart" class="chart-box"></div>
+    </div>
+    <div class="dash-card full">
+      <h4>地区分布</h4>
+      <div id="country-chart" class="chart-box"></div>
+    </div>
+
+    <!-- 最近事件 -->
+    <div class="dash-card full">
+      <h4>最近攻击事件 <span id="live-indicator" class="live-indicator" title="实时连接状态"></span></h4>
+      <table class="simple-table">
+        <thead><tr><th>时间</th><th>IP</th><th>方法</th><th>路径</th><th>级别</th></tr></thead>
+        <tbody id="recent-events-body">
+          {% for e in recent_attacks %}
+          <tr>
+            <td>{{ e.timestamp.strftime('%m-%d %H:%M') if e.timestamp else '—' }}</td>
+            <td><a href="{{ url_for('admin.attack_detail', event_id=e.id) }}">{{ e.ip_address }}</a></td>
+            <td>{{ e.method }}</td>
+            <td>{{ e.path[:30] + '...' if e.path and e.path|length > 30 else e.path or '—' }}</td>
+            <td><span class="severity-{{ e.severity or 'unknown' }}">{{ e.severity or '—' }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="empty-text">暂无攻击事件</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+<script>
+(function () {
+    const css = getComputedStyle(document.documentElement);
+    const axisColor = css.getPropertyValue('--text-muted').trim();
+    const lineColor = css.getPropertyValue('--border').trim();
+    const primary = css.getPropertyValue('--primary').trim();
+
+    const attackTypesData = {{ attack_types | tojson }};
+    const countryData = {{ country_stats | tojson }};
+
+    // 攻击类型饼图
+    const typeChart = echarts.init(document.getElementById('attack-types-chart'));
+    typeChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+        legend: { textStyle: { color: axisColor }, bottom: 0 },
+        series: [{
+            type: 'pie',
+            radius: '50%',
+            data: attackTypesData.map(i => ({ value: i[1], name: i[0] || '未知' }))
+        }]
+    });
+
+    // 地区柱状图
+    const countryChart = echarts.init(document.getElementById('country-chart'));
+    countryChart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { left: 40, right: 20, top: 30, bottom: 30 },
+        xAxis: {
+            type: 'category',
+            data: countryData.map(i => i[0] || '未知'),
+            axisLabel: { color: axisColor },
+            axisLine: { lineStyle: { color: lineColor } }
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: { color: axisColor },
+            splitLine: { lineStyle: { color: lineColor } }
+        },
+        series: [{
+            type: 'bar',
+            data: countryData.map(i => i[1]),
+            itemStyle: { color: primary }
+        }]
+    });
+
+    window.addEventListener('resize', () => { typeChart.resize(); countryChart.resize(); });
+})();
+
+/* ---- 实时数据推送(SSE,任务4.1) ---- */
+(function () {
+    var totalEl = document.getElementById('stat-total-attacks');
+    var attackersEl = document.getElementById('stat-unique-attackers');
+    var body = document.getElementById('recent-events-body');
+    var indicator = document.getElementById('live-indicator');
+    var MAX_ROWS = 20;
+
+    function setLive(state) {
+        indicator.className = 'live-indicator live-indicator--' + state;
+        indicator.title = state === 'live' ? '实时连接中' : '连接中断,正在自动重连…';
+    }
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function prependEvent(ev) {
+        // 避免重复行(同事件 id)
+        if (body.querySelector('tr[data-event-id="' + ev.id + '"]')) return;
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-event-id', ev.id);
+        var shortPath = ev.path && ev.path.length > 30 ? ev.path.slice(0, 30) + '...' : (ev.path || '—');
+        var ts = ev.timestamp ? ev.timestamp.slice(5) : '—';  // MM-DD HH:MM:SS
+        tr.innerHTML =
+            '<td>' + escapeHtml(ts) + '</td>' +
+            '<td><a href="/admin/attacks/' + ev.id + '">' + escapeHtml(ev.ip_address) + '</a></td>' +
+            '<td>' + escapeHtml(ev.method) + '</td>' +
+            '<td>' + escapeHtml(shortPath) + '</td>' +
+            '<td><span class="severity-' + escapeHtml(ev.severity || 'unknown') + '">'
+                + escapeHtml(ev.severity || '—') + '</span></td>';
+        body.insertBefore(tr, body.firstChild);
+        tr.classList.add('row-flash');
+        while (body.querySelectorAll('tr').length > MAX_ROWS) {
+            body.removeChild(body.lastChild);
+        }
+    }
+
+    // EventSource 内置自动重连(浏览器默认 3 秒退避)
+    try {
+        var es = new EventSource('{{ url_for("admin.stream") }}');
+        es.onopen = function () { setLive('live'); };
+        es.onmessage = function (e) {
+            var ev;
+            try { ev = JSON.parse(e.data); } catch (err) { return; }
+            if (ev.totals) {
+                if (ev.totals.total_attacks != null) totalEl.textContent = ev.totals.total_attacks;
+                if (ev.totals.unique_attackers != null) attackersEl.textContent = ev.totals.unique_attackers;
+            }
+            prependEvent(ev);
+        };
+        es.onerror = function () { setLive('off'); /* 浏览器会自动重连 */ };
+        setLive('off');
+    } catch (err) {
+        setLive('off');
+    }
+})();
+</script>
+{% endblock %}

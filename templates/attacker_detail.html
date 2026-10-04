@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block title %}攻击者详情{% endblock %}
+{% block header %}攻击者详情{% endblock %}
+{% block content %}
+<!-- 返回链接 -->
+<div class="back-link">
+    <a href="{{ url_for('admin.attackers') }}" class="btn btn-secondary">← 返回攻击者列表</a>
+</div>
+
+<!-- 攻击者画像信息卡片 -->
+<div class="profile-card">
+    <h3>
+        攻击者画像
+        {% if profile.is_blocked %}
+        <span class="badge badge-danger">已封禁</span>
+        {% endif %}
+    </h3>
+    <div class="profile-grid">
+        <div class="profile-item">
+            <span class="profile-label">IP 地址</span>
+            <span class="profile-value">{{ profile.ip_address }}</span>
+        </div>
+        <div class="profile-item">
+            <span class="profile-label">国家 / 城市</span>
+            <span class="profile-value">
+                {{ profile.country or '—' }}{% if profile.city %} / {{ profile.city }}{% endif %}
+            </span>
+        </div>
+        <div class="profile-item">
+            <span class="profile-label">ASN</span>
+            <span class="profile-value">{{ profile.asn or '—' }}</span>
+        </div>
+        <div class="profile-item">
+            <span class="profile-label">ISP</span>
+            <span class="profile-value">{{ profile.isp or '—' }}</span>
+        </div>
+        <div class="profile-item profile-item-wide">
+            <span class="profile-label">威胁情报</span>
+            <span class="profile-value">
+                {% if threat and threat.malicious %}
+                <span class="threat-badge">⚠ 已知恶意 IP</span>
+                {% if threat.category %}<div class="threat-meta">{{ threat.category }}{% if threat.confidence is not none %} · 置信度 {{ threat.confidence }}/100{% endif %}</div>{% endif %}
+                {% if threat.detail %}<div class="threat-meta">来源 {{ threat.source }}:{{ threat.detail }}</div>{% else %}<div class="threat-meta">来源:{{ threat.source }}</div>{% endif %}
+                {% elif threat %}
+                <span class="threat-badge threat-badge--safe">✓ 未命中威胁情报</span>
+                {% else %}
+                <span class="text-muted">尚未查询</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="profile-item profile-item-wide">
+            <span class="profile-label">User-Agent</span>
+            <span class="profile-value">{{ profile.user_agent or '—' }}</span>
+        </div>
+        <div class="profile-item">
+            <span class="profile-label">首次出现</span>
+            <span class="profile-value">{{ profile.first_seen.strftime('%Y-%m-%d %H:%M:%S') if profile.first_seen else '—' }}</span>
+        </div>
+        <div class="profile-item">
+            <span class="profile-label">最近出现</span>
+            <span class="profile-value">{{ profile.last_seen.strftime('%Y-%m-%d %H:%M:%S') if profile.last_seen else '—' }}</span>
+        </div>
+        <div class="profile-item">
+            <span class="profile-label">攻击总数</span>
+            <span class="profile-value">{{ pagination.total }}</span>
+        </div>
+        {% if profile.is_blocked %}
+        <div class="profile-item profile-item-wide">
+            <span class="profile-label">封禁原因</span>
+            <span class="profile-value">{{ profile.block_reason or '（未填写）' }}</span>
+        </div>
+        <div class="profile-item">
+            <span class="profile-label">封禁时间</span>
+            <span class="profile-value">{{ profile.blocked_at.strftime('%Y-%m-%d %H:%M:%S') if profile.blocked_at else '—' }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 封禁 / 解封操作 -->
+    {% if current_user.is_admin %}
+    <div class="profile-actions">
+        {% if profile.is_blocked %}
+        <form method="post" action="{{ url_for('admin.unblock_attacker', profile_id=profile.id) }}"
+              class="inline-form" onsubmit="return confirm('确定解封该 IP 吗？')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary">解除封禁</button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('admin.block_attacker', profile_id=profile.id) }}" class="block-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="block_reason" class="input-field" placeholder="封禁原因（可选）" maxlength="255">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('确定封禁该 IP 吗？')">封禁此 IP</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- 该攻击者的攻击历史 -->
+<div class="table-container">
+    <h3>攻击历史</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>时间</th>
+                <th>方法</th>
+                <th>路径</th>
+                <th>服务</th>
+                <th>签名</th>
+                <th>严重级别</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in events %}
+            <tr>
+                <td><a href="{{ url_for('admin.attack_detail', event_id=e.id) }}">#{{ e.id }}</a></td>
+                <td>{{ e.timestamp.strftime('%m-%d %H:%M:%S') if e.timestamp else '—' }}</td>
+                <td>{{ e.method }}</td>
+                <td>{{ e.path[:50] + '...' if e.path and e.path|length > 50 else e.path or '—' }}</td>
+                <td>{{ e.honeypot_service or '—' }}</td>
+                <td>{{ e.signature or '—' }}</td>
+                <td><span class="severity-{{ e.severity or 'unknown' }}">{{ e.severity or '—' }}</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="empty-text">该攻击者暂无攻击记录</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 分页 -->
+    {% if pagination %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.attacker_detail', profile_id=profile.id, page=pagination.prev_num) }}" class="btn btn-sm">上一页</a>
+        {% endif %}
+
+        <span class="pagination-info">
+            第 {{ pagination.page }} 页，共 {{ pagination.pages }} 页，总计 {{ pagination.total }} 条记录
+        </span>
+
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.attacker_detail', profile_id=profile.id, page=pagination.next_num) }}" class="btn btn-sm">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

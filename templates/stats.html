@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}数据统计模块{% endblock %}
+{% block header %}数据统计模块{% endblock %}
+{% block content %}
+    <div class="stats">
+        <div class="stat-card">
+            <h3>{{ total_events }}</h3>
+            <p>攻击事件总数</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ total_attackers }}</h3>
+            <p>攻击者数量</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ latest_event.timestamp if latest_event else '—' }}</h3>
+            <p>最新事件时间</p>
+        </div>
+    </div>
+
+    <!-- 最近 7 天攻击趋势 -->
+    <div class="chart-card">
+        <h4>最近 7 天攻击趋势</h4>
+        <div id="trend-chart" class="chart-box"></div>
+    </div>
+
+    <!-- 严重级别分布 -->
+    <div class="chart-card">
+        <h4>严重级别分布</h4>
+        <div id="severity-chart" class="chart-box"></div>
+    </div>
+
+    <!-- Top 10 攻击 IP -->
+    <div class="table-container">
+        <h4>Top 10 攻击 IP</h4>
+        <table>
+            <thead>
+                <tr><th>排名</th><th>IP 地址</th><th>攻击次数</th></tr>
+            </thead>
+            <tbody>
+                {% for ip, count in top_ips %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ ip }}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="empty-text">暂无数据</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="operations">
+        <h3>操作</h3>
+        <div class="btn-group">
+            <form method="post" action="{{ url_for('admin.simulate_attack') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success">模拟一条攻击数据</button>
+            </form>
+            <a class="btn btn-primary" href="{{ url_for('admin.export_stats') }}">导出统计为TXT</a>
+        </div>
+        <small class="update-time">最新更新时间：{{ (latest_event.timestamp if latest_event else None) or '无' }}</small>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <!-- ECharts -->
+    <script src="{{ url_for('static', filename='js/echarts.min.js') }}"></script>
+    <script>
+    // 读取当前主题变量,让图表文字/分割线随深浅主题变化
+    (function () {
+        const css = getComputedStyle(document.documentElement);
+        const axisColor = css.getPropertyValue('--text-muted').trim();
+        const lineColor = css.getPropertyValue('--border').trim();
+        const primary = css.getPropertyValue('--primary').trim();
+
+        // 最近 7 天攻击趋势折线图
+        const trendChart = echarts.init(document.getElementById('trend-chart'));
+        trendChart.setOption({
+            tooltip: { trigger: 'axis' },
+            grid: { left: 40, right: 20, top: 30, bottom: 30 },
+            xAxis: {
+                type: 'category',
+                data: {{ trend_labels | tojson }},
+                axisLabel: { color: axisColor },
+                axisLine: { lineStyle: { color: lineColor } }
+            },
+            yAxis: {
+                type: 'value',
+                minInterval: 1,
+                axisLabel: { color: axisColor },
+                splitLine: { lineStyle: { color: lineColor } }
+            },
+            series: [{
+                type: 'line',
+                data: {{ trend_data | tojson }},
+                smooth: true,
+                areaStyle: { opacity: 0.3 },
+                itemStyle: { color: primary }
+            }]
+        });
+
+        // 严重级别分布饼图
+        const severityChart = echarts.init(document.getElementById('severity-chart'));
+        severityChart.setOption({
+            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+            legend: { textStyle: { color: axisColor }, bottom: 0 },
+            series: [{
+                type: 'pie',
+                radius: '50%',
+                data: {{ severity_stats | tojson }}.map(i => ({ value: i[1], name: i[0] || '未知' }))
+            }]
+        });
+
+        window.addEventListener('resize', () => { trendChart.resize(); severityChart.resize(); });
+    })();
+    </script>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}攻击者画像{% endblock %}
+{% block header %}攻击者画像{% endblock %}
+{% block content %}
+<!-- 筛选区域 -->
+<div class="filter-section">
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <label>IP地址:</label>
+            <input type="text" name="ip" value="{{ filters.ip }}" placeholder="输入IP地址">
+        </div>
+        <div class="filter-group">
+            <label>国家:</label>
+            <input type="text" name="country" value="{{ filters.country }}" placeholder="如 China">
+        </div>
+        <div class="filter-group">
+            <label>状态:</label>
+            <select name="is_blocked">
+                <option value="">全部</option>
+                <option value="1" {% if filters.is_blocked == '1' %}selected{% endif %}>已封禁</option>
+                <option value="0" {% if filters.is_blocked == '0' %}selected{% endif %}>正常</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>攻击次数≥:</label>
+            <input type="number" name="min_count" value="{{ filters.min_count }}" placeholder="最小">
+        </div>
+        <div class="filter-group">
+            <label>攻击次数≤:</label>
+            <input type="number" name="max_count" value="{{ filters.max_count }}" placeholder="最大">
+        </div>
+        <div class="filter-group">
+            <label>首次出现≥:</label>
+            <input type="date" name="first_seen_from" value="{{ filters.first_seen_from }}">
+        </div>
+        <div class="filter-group">
+            <label>最近出现≤:</label>
+            <input type="date" name="last_seen_to" value="{{ filters.last_seen_to }}">
+        </div>
+        <button type="submit" class="btn btn-primary">筛选</button>
+        <a href="{{ url_for('admin.attackers') }}" class="btn btn-secondary">清除</a>
+        <a href="{{ url_for('admin.blacklist') }}" class="btn btn-danger">查看黑名单</a>
+        <div class="btn-group-right">
+            <a href="{{ url_for('admin.export_attackers', format='csv') }}" class="btn btn-sm btn-secondary">导出 CSV</a>
+            <a href="{{ url_for('admin.export_attackers', format='json') }}" class="btn btn-sm btn-secondary">JSON</a>
+            <a href="{{ url_for('admin.export_attackers', format='xlsx') }}" class="btn btn-sm btn-secondary">Excel</a>
+        </div>
+    </form>
+</div>
+
+<!-- 攻击者列表 -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>IP地址</th>
+                <th>UA</th>
+                <th>国家</th>
+                <th>城市</th>
+                <th>ASN</th>
+                <th>ISP</th>
+                <th>攻击次数</th>
+                <th>状态</th>
+                <th>首次出现</th>
+                <th>最近出现</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in profiles %}
+            <tr class="{{ 'row-blocked' if p.is_blocked else '' }}">
+                <td>{{ p.id }}</td>
+                <td><a href="{{ url_for('admin.attacker_detail', profile_id=p.id) }}">{{ p.ip_address }}</a></td>
+                <td title="{{ p.user_agent }}">{{ (p.user_agent or '')[:40] + ('...' if p.user_agent and p.user_agent|length > 40 else '') }}</td>
+                <td>{{ p.country or '—' }}</td>
+                <td>{{ p.city or '—' }}</td>
+                <td>{{ p.asn or '—' }}</td>
+                <td>{{ p.isp or '—' }}</td>
+                <td>{{ attack_counts.get(p.id, 0) }}</td>
+                <td>
+                    {% if p.is_blocked %}
+                    <span class="badge badge-danger" title="{{ p.block_reason or '' }}">已封禁</span>
+                    {% else %}
+                    <span class="badge badge-muted">正常</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.first_seen.strftime('%Y-%m-%d %H:%M') if p.first_seen else '—' }}</td>
+                <td>{{ p.last_seen.strftime('%Y-%m-%d %H:%M') if p.last_seen else '—' }}</td>
+                <td class="cell-actions">
+                    {% if current_user.is_admin %}
+                    {% if p.is_blocked %}
+                    <form method="post" action="{{ url_for('admin.unblock_attacker', profile_id=p.id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-secondary">解封</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{{ url_for('admin.block_attacker', profile_id=p.id) }}" class="inline-form"
+                          onsubmit="var r=prompt('封禁原因(可选):',''); if(r===null){return false;} this.block_reason.value=r;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="block_reason" value="">
+                        <button type="submit" class="btn btn-sm btn-danger">封禁</button>
+                    </form>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="12" class="empty-text">暂无攻击者数据</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 分页(保持筛选条件) -->
+    {% if pagination %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.attackers', page=pagination.prev_num, **filters) }}" class="btn btn-sm">上一页</a>
+        {% endif %}
+
+        <span class="pagination-info">
+            第 {{ pagination.page }} 页，共 {{ pagination.pages }} 页，总计 {{ pagination.total }} 条记录
+        </span>
+
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.attackers', page=pagination.next_num, **filters) }}" class="btn btn-sm">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

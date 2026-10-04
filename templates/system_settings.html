@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}系统设置{% endblock %}
+{% block header %}系统设置{% endblock %}
+{% block content %}
+<div class="settings-container">
+    <form method="post" action="{{ url_for('settings.system_settings') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- 全局开关与策略 -->
+        <div class="settings-card">
+            <h3>全局策略</h3>
+
+            <div class="settings-section">
+                <div class="form-group switch-row">
+                    <input type="checkbox" name="register_enabled" id="register_enabled" {% if s.register_enabled %}checked{% endif %}>
+                    <label for="register_enabled">开放自助注册</label>
+                </div>
+                <p class="hint-text">关闭后 /register 返回 404，账号由管理员创建。</p>
+            </div>
+
+            <div class="settings-section">
+                <div class="form-group switch-row">
+                    <input type="checkbox" name="geoip_enabled" id="geoip_enabled" {% if s.geoip_enabled %}checked{% endif %}>
+                    <label for="geoip_enabled">启用 GeoIP 归属地解析</label>
+                </div>
+                <p class="hint-text">关闭后新捕获的攻击不再请求 ip-api.com，可用于内网/无外网部署。</p>
+            </div>
+
+            <div class="settings-section settings-form-grid">
+                <div class="form-group">
+                    <label for="data_retention_days">数据保留天数</label>
+                    <input type="number" min="1" max="3650" id="data_retention_days"
+                           name="data_retention_days" class="input-field" value="{{ s.data_retention_days }}">
+                    <p class="hint-text">定时清理任务按此天数删除旧事件。</p>
+                </div>
+                <div class="form-group">
+                    <label for="api_rate_limit">API 限流速率</label>
+                    <input type="text" id="api_rate_limit" name="api_rate_limit"
+                           class="input-field" value="{{ s.api_rate_limit }}">
+                    <p class="hint-text">Flask-Limiter 语法，如 <code>100 per minute</code>、<code>10/second</code>。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 邮件与每日报告 -->
+        <div class="settings-card">
+            <h3>邮件通知</h3>
+
+            <div class="settings-section">
+                <div class="form-group switch-row">
+                    <input type="checkbox" name="email_alerts_enabled" id="email_alerts_enabled" {% if s.email_alerts_enabled %}checked{% endif %}>
+                    <label for="email_alerts_enabled">启用高危攻击实时告警邮件</label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="form-group switch-row">
+                    <input type="checkbox" name="daily_report_enabled" id="daily_report_enabled" {% if s.daily_report_enabled %}checked{% endif %}>
+                    <label for="daily_report_enabled">启用每日攻击报告</label>
+                </div>
+                <div class="form-group" style="margin-top:10px;max-width:220px;">
+                    <label for="daily_report_time">每日报告发送时间 (UTC, HH:MM)</label>
+                    <input type="time" id="daily_report_time" name="daily_report_time"
+                           class="input-field" value="{{ s.daily_report_time }}">
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="form-group switch-row">
+                    <input type="checkbox" name="smtp_enabled" id="smtp_enabled" {% if s.smtp_enabled %}checked{% endif %}>
+                    <label for="smtp_enabled">启用 SMTP 发送</label>
+                </div>
+
+                <div class="settings-form-grid" style="margin-top:12px;">
+                    <div class="form-group">
+                        <label for="smtp_host">SMTP 服务器</label>
+                        <input type="text" id="smtp_host" name="smtp_host"
+                               class="input-field" value="{{ s.smtp_host }}" placeholder="smtp.example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp_port">端口</label>
+                        <input type="number" id="smtp_port" name="smtp_port"
+                               class="input-field" value="{{ s.smtp_port }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp_username">用户名</label>
+                        <input type="text" id="smtp_username" name="smtp_username"
+                               class="input-field" value="{{ s.smtp_username }}" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp_password">密码 / 授权码（留空不修改）</label>
+                        <input type="password" id="smtp_password" name="smtp_password"
+                               class="input-field" value="" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="smtp_sender">发件人地址</label>
+                        <input type="email" id="smtp_sender" name="smtp_sender"
+                               class="input-field" value="{{ s.smtp_sender }}" placeholder="honeypot@example.com">
+                    </div>
+                    <div class="form-group switch-row" style="align-self:flex-end;padding-bottom:10px;">
+                        <input type="checkbox" name="smtp_use_tls" id="smtp_use_tls" {% if s.smtp_use_tls %}checked{% endif %}>
+                        <label for="smtp_use_tls">使用 STARTTLS</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 威胁情报(任务4.3) -->
+        <div class="settings-card">
+            <h3>威胁情报</h3>
+
+            <div class="settings-section">
+                <div class="form-group switch-row">
+                    <input type="checkbox" name="threat_intel_enabled" id="threat_intel_enabled" {% if s.threat_intel_enabled %}checked{% endif %}>
+                    <label for="threat_intel_enabled">启用威胁情报标记</label>
+                </div>
+                <p class="hint-text">默认使用 Spamhaus DROP/EDROP 开源恶意网段(无需 API Key,每 6 小时自动同步)。</p>
+            </div>
+
+            <div class="settings-section settings-form-grid">
+                <div class="form-group">
+                    <label for="abuseipdb_api_key">AbuseIPDB API Key(可选)</label>
+                    <input type="text" id="abuseipdb_api_key" name="abuseipdb_api_key"
+                           class="input-field" value="{{ s.abuseipdb_api_key }}"
+                           autocomplete="off" placeholder="留空则仅使用开源 feed">
+                    <p class="hint-text">在 abuseipdb.com 免费注册获取,用于单 IP 信誉评分查询。</p>
+                </div>
+                <div class="form-group">
+                    <label for="abuseipdb_threshold">恶意判定阈值(0-100)</label>
+                    <input type="number" min="1" max="99" id="abuseipdb_threshold"
+                           name="abuseipdb_threshold" class="input-field"
+                           value="{{ s.abuseipdb_threshold }}">
+                    <p class="hint-text">AbuseIPDB 置信度 ≥ 该阈值时标记为恶意 IP。</p>
+                </div>
+                <div class="form-group">
+                    <label for="threat_intel_cache_hours">情报缓存时长(小时)</label>
+                    <input type="number" min="1" max="720" id="threat_intel_cache_hours"
+                           name="threat_intel_cache_hours" class="input-field"
+                           value="{{ s.threat_intel_cache_hours }}">
+                    <p class="hint-text">缓存期内不重复查询,节省 API 配额。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMTP 测试 -->
+        <div class="settings-card">
+            <h3>发送测试邮件</h3>
+            <div class="settings-section">
+                <form method="post" action="{{ url_for('settings.test_email') }}" class="block-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="email" name="test_email" class="input-field"
+                           placeholder="收件邮箱,如 admin@example.com" required>
+                    <button type="submit" class="btn btn-secondary">发送测试邮件</button>
+                </form>
+                <p class="hint-text">请先保存 SMTP 设置后再测试。</p>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">保存设置</button>
+            <a href="{{ url_for('settings.settings') }}" class="btn btn-secondary">返回个人设置</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

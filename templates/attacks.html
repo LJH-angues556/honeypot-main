@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}攻击事件{% endblock %}
+{% block header %}攻击事件{% endblock %}
+{% block content %}
+<!-- 筛选区域 -->
+<div class="filter-section">
+    <form method="get" class="filter-form">
+        <div class="filter-group">
+            <label>IP地址:</label>
+            <input type="text" name="ip" value="{{ filters.ip }}" placeholder="输入IP地址">
+        </div>
+        <div class="filter-group">
+            <label>方法:</label>
+            <select name="method">
+                <option value="">全部</option>
+                {% for m in ['GET','POST','PUT','DELETE'] %}
+                <option value="{{ m }}" {% if filters.method == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>严重级别:</label>
+            <select name="severity">
+                <option value="">全部</option>
+                {% for s in ['info','low','medium','high','critical'] %}
+                <option value="{{ s }}" {% if filters.severity == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>蜜罐服务:</label>
+            <select name="service">
+                <option value="">全部</option>
+                {% for svc in ['web','http-phpmyadmin','http-wordpress','http-admin','ssh','telnet','redis'] %}
+                <option value="{{ svc }}" {% if filters.service == svc %}selected{% endif %}>{{ svc }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>攻击签名:</label>
+            <input type="text" name="signature" value="{{ filters.signature }}" placeholder="模糊搜索">
+        </div>
+        <div class="filter-group">
+            <label>国家:</label>
+            <input type="text" name="country" value="{{ filters.country }}" placeholder="如 China">
+        </div>
+        <div class="filter-group">
+            <label>开始:</label>
+            <input type="date" name="start_date" value="{{ filters.start_date }}">
+        </div>
+        <div class="filter-group">
+            <label>结束:</label>
+            <input type="date" name="end_date" value="{{ filters.end_date }}">
+        </div>
+        <button type="submit" class="btn btn-primary">筛选</button>
+        <a href="{{ url_for('admin.attacks') }}" class="btn btn-secondary">清除</a>
+        <div class="btn-group-right">
+            <a href="{{ url_for('admin.export_attacks', format='csv', **filters) }}" class="btn btn-sm btn-secondary">导出 CSV</a>
+            <a href="{{ url_for('admin.export_attacks', format='json', **filters) }}" class="btn btn-sm btn-secondary">JSON</a>
+            <a href="{{ url_for('admin.export_attacks', format='xlsx', **filters) }}" class="btn btn-sm btn-secondary">Excel</a>
+        </div>
+    </form>
+</div>
+
+<!-- 攻击事件列表 -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>时间</th>
+                <th>IP</th>
+                <th>方法</th>
+                <th>路径</th>
+                <th>服务</th>
+                <th>签名</th>
+                <th>严重级别</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in events %}
+            <tr class="{{ 'row-blocked' if e.attacker_id in blocked_attacker_ids else '' }}">
+                <td><a href="{{ url_for('admin.attack_detail', event_id=e.id) }}">#{{ e.id }}</a></td>
+                <td>{{ e.timestamp.strftime('%m-%d %H:%M:%S') if e.timestamp else '—' }}</td>
+                <td>
+                    <a href="{{ url_for('admin.attack_detail', event_id=e.id) }}">{{ e.ip_address }}</a>
+                    {% if e.attacker_id in blocked_attacker_ids %}
+                    <span class="badge badge-danger badge-inline" title="该 IP 已被加入黑名单">封禁</span>
+                    {% endif %}
+                </td>
+                <td>{{ e.method }}</td>
+                <td>{{ e.path[:50] + '...' if e.path and e.path|length > 50 else e.path or '—' }}</td>
+                <td>{{ e.honeypot_service or '—' }}</td>
+                <td>{{ e.signature or '—' }}</td>
+                <td><span class="severity-{{ e.severity or 'unknown' }}">{{ e.severity or '—' }}</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="empty-text">暂无攻击事件数据</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 分页(保持筛选条件) -->
+    {% if pagination %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.attacks', page=pagination.prev_num, **filters) }}" class="btn btn-sm">上一页</a>
+        {% endif %}
+
+        <span class="pagination-info">
+            第 {{ pagination.page }} 页，共 {{ pagination.pages }} 页，总计 {{ pagination.total }} 条记录
+        </span>
+
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.attacks', page=pagination.next_num, **filters) }}" class="btn btn-sm">下一页</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<div id="sse-toast" class="sse-toast" title="点击刷新列表">⚡ 收到新的攻击事件,点击刷新</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* 事件列表页:有新事件时弹出提示气泡(不自动打断分页/筛选状态) */
+(function () {
+    var toast = document.getElementById('sse-toast');
+    var timer = null;
+    try {
+        var es = new EventSource('{{ url_for("admin.stream") }}');
+        es.onmessage = function () {
+            toast.classList.add('sse-toast--show');
+            clearTimeout(timer);
+            timer = setTimeout(function () { toast.classList.remove('sse-toast--show'); }, 8000);
+        };
+        toast.addEventListener('click', function () { location.reload(); });
+    } catch (err) { /* EventSource 不支持时静默 */ }
+})();
+</script>
+{% endblock %}

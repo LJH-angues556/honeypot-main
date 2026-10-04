@@ -1,0 +1,24 @@
+# 构建镜像时排除的文件,减小体积 + 避免把本地环境/密钥打进镜像
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+*.md
+*.log
+*.tmp
+.env.local
+# Docker 自身文件无需进镜像
+Dockerfile
+.dockerignore
+docker-compose.yml
+# 数据库本地数据
+*.sqlite3
+db.sqlite3
