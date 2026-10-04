@@ -28,6 +28,9 @@ instance/
 .DS_Store
 Thumbs.db
 
+# ---- 项目诊断/计划 PDF(仅本地保留,不入库) ----
+execution-plan.pdf
+
 # ---- IDE / 工具产物 ----
 .idea/
 .vscode/
